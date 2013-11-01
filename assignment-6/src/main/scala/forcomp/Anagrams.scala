@@ -174,23 +174,14 @@ object Anagrams {
    *  Note: There is only one anagram of an empty sentence.
    */
   def sentenceAnagrams(sentence: Sentence): List[Sentence] = {
-    lazy val occurrences = sentenceOccurrences(sentence)
-    lazy val occurrenceCombinations = combinations(occurrences)
-    lazy val wordsByOccurrences = occurrenceCombinations.foldLeft(Map[Occurrences, List[Word]]())((mem, occurrence) =>
-      if (dictionaryByOccurrences.contains(occurrence))
-        mem.updated(occurrence, dictionaryByOccurrences(occurrence))
-      else
-        mem
-    )
-
     def occurrenceAnagrams(occurrences: Occurrences): List[Sentence] = occurrences match {
       case Nil => List(Nil)
       case _ => {
         val occurrenceCombinations: List[Occurrences] = combinations(occurrences)
         occurrenceCombinations.flatMap((combination) => {
-          if (wordsByOccurrences.contains(combination)) {
+          if (dictionaryByOccurrences.contains(combination)) {
             val recursiveSentences = occurrenceAnagrams(subtract(occurrences, combination))
-            val foundWords = wordsByOccurrences(combination)
+            val foundWords = dictionaryByOccurrences(combination)
             for (sentence <- recursiveSentences; word <- foundWords if sentenceOccurrences(word :: sentence) == occurrences) yield {
               word :: sentence
             }
@@ -200,6 +191,7 @@ object Anagrams {
       }
     }
     
-    occurrenceAnagrams(occurrences).flatMap((sentence) => sentence.permutations.toList)
+    val occurrences = sentenceOccurrences(sentence)
+    occurrenceAnagrams(occurrences)
   }
 }
