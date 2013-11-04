@@ -42,6 +42,16 @@ trait Solver extends GameDef {
 
   type History = Stream[(Block, List[Move])]
 
+  object History {
+    def apply(args: (Block, List[Move])*) = Stream[(Block, List[Move])](args:_*)
+  }
+
+  type BacklogStream = Stream[(History, Set[Block])]
+
+  object BacklogStream {
+    def apply(args: (History, Set[Block])*) = Stream[(History, Set[Block])](args:_*)
+  }
+
   /**
    * The function `from` returns the stream of all possible paths
    * that can be followed, starting at the `head` of the `initial`
@@ -71,18 +81,18 @@ trait Solver extends GameDef {
     }
 
     def streamToNeighbors(stream: History, explored: Set[Block]) =
-      stream.foldLeft(Stream[(Block, List[Move])]())((mem, pair) =>
+      stream.foldLeft(History())((mem, pair) =>
         mem #::: nextSteps(pair, explored)
       )
 
     def streamToBacklog(stream: History, explored: Set[Block]) =
-      stream.foldLeft(Stream[(History, Set[Block])]())((mem, pair) =>
+      stream.foldLeft(BacklogStream())((mem, pair) =>
         (nextSteps(pair, explored), explored + pair._1) #:: mem
       )
 
-    def work(initial: Stream[(History, Set[Block])]): History = {
+    def work(initial: BacklogStream): History = {
       if (!initial.isEmpty)
-        initial.foldLeft((Stream[(Block, List[Move])](), Stream[(History, Set[Block])]()))((mem, streamWithExplored) =>
+        initial.foldLeft((History(), BacklogStream()))((mem, streamWithExplored) =>
           mem match {
             case (neighborsStream, backlogStream) =>
               (neighborsStream #::: streamToNeighbors(streamWithExplored._1, streamWithExplored._2), backlogStream #::: streamToBacklog(streamWithExplored._1, streamWithExplored._2))
